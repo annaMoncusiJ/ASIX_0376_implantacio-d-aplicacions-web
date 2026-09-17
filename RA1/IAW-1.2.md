@@ -25,7 +25,7 @@ ssh alumne@127.0.0.1 -p 8022
 | Apache tradicional | http://127.0.0.1:80 | 80 |
 | MariaDB tradicional | 127.0.0.1:3306 | 3306 |
 
-**En la infraestructura inicial només està configurat el reenviament SSH 8022→22.** Afegeix els altres reenviaments quan s’indiqui a l’activitat a: VirtualBox → Configuració de la VM → Xarxa → NAT → Avançat → Reenviament de ports. Tots són TCP, amb **IP amfitrió 127.0.0.1**, port amfitrió i port convidat de la taula. Conserva les regles que ja hagis creat en activitats anteriors; no les dupliquis. El professorat t’indicarà si cal especificar la IP convidat.
+**En la infraestructura inicial només està configurat el reenviament SSH 8022→22.** Afegeix els altres reenviaments quan s’indiqui a l’activitat a: VirtualBox → Configuració de la VM → Xarxa → NAT → Avançat → Reenviament de ports. Tots són TCP, amb **IP amfitrió 127.0.0.1**, port amfitrió i port convidat de la taula. Conserva les regles que ja hagis creat en activitats anteriors; no les dupliquis. El professorat t’indicarà si cal especificar la IP convidada.
 
 > `127.0.0.1` identifica l’entorn on executes la comanda: l’ordinador, Debian o un contenidor. Fer servir el mateix número de port, com el 3306 de MariaDB tradicional, no converteix aquests entorns en un de sol. Si el port 3306 de l’ordinador ja està ocupat per un servei local, avisa abans de modificar-lo: no aturis serveis desconeguts ni canviïs ports sense acordar-ho.
 
@@ -209,17 +209,17 @@ En una **resposta estàtica**, Apache llegeix el fitxer HTML i en retorna el con
 
 `curl -i` mostra les capçaleres HTTP i el cos. El codi **200** indica que la petició s’ha atès correctament, però per demostrar la funcionalitat també has de comprovar el contingut. Per això es demanen marques i una data generada per PHP.
 
-VS Code Remote SSH permet editar i treballar amb fitxers de Debian des de l’ordinador. El terminal remot executa a Debian; un terminal local de l’ordinador és un entorn diferent. La connexió SSH utilitza el port 8022 de l’ordinador (22 de la maquina que redirigim amb virtual box), mentre que el navegador usa el 80 del web.
+VS Code Remote SSH permet editar i treballar amb fitxers de Debian des de l’ordinador. El terminal remot executa a Debian; un terminal local de l’ordinador és un entorn diferent. La connexió SSH utilitza el port 8022 de l’ordinador (22 de la màquina que redirigim amb virtual box), mentre que el navegador usa el 80 del web.
 
 ### Què has de fer
-1. Ara editarem el projecte, es pot fer servir un editor especific, peró per ara amb `nano` en tenim suficient. No executis l’editor com a root: edita una còpia anomenada `prova.php` al teu directori personal (`~/prova.php`).
-2. Publica-la al directori web executant el següent comandament (això crearà una copia de `prova.php` a `/var/www/asix/public/prova.php` amb permisos `0644` de cop):
+1. Ara editarem el projecte, es pot fer servir un editor específic, però per ara amb `nano` en tenim prou. No executis l’editor com a root: edita una còpia anomenada `prova.php` al teu directori personal (`~/prova.php`).
+2. Pública-la al directori web executant el següent comandament (això crearà una còpia de `prova.php` a `/var/www/asix/public/prova.php` amb permisos `0644` de cop):
 
 ```bash
 sudo install -m 0644 ~/prova.php /var/www/asix/public/prova.php
 ```
 
-El fitxer ha de contenir exactament aquest codi, per ara no cal entendre'l, ho treballarem més endevant:
+El fitxer ha de contenir exactament aquest codi, per ara no cal entendre'l, ho treballarem més endavant:
 
 ```php
 <?php
@@ -257,7 +257,7 @@ curl.exe -i http://127.0.0.1:80/prova.php
 
 Les dues respostes han de tenir codi **200**. La primera ha de mostrar `ASIX_WEB_OK`; la segona, `ASIX_PHP_OK` i la data calculada al servidor. Si veus el codi font PHP, el processament PHP no està ben configurat.
 
-4. Entra a les seguents url des del teu navegador:
+4. Entra a les següents url des del teu navegador:
     - 127.0.0.1
     - 127.0.0.1/index.html
     - 127.0.0.1/prova.php
@@ -272,7 +272,7 @@ Les dues respostes han de tenir codi **200**. La primera ha de mostrar `ASIX_WEB
 **Per què la data de prova.php es calcula al servidor i no al navegador?**
 ...
 
-**Quina diferencia hi ha quan al navegador accedim a 127.0.0.1 i a 127.0.0.1/index.html?**
+**Quina diferència hi ha quan al navegador accedim a 127.0.0.1 i a 127.0.0.1/index.html?**
 ...
 
 ## 4. Comprova que no es mostren directoris ni secrets · E4
