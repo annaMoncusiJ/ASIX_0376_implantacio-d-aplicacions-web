@@ -5,7 +5,8 @@
 Compararàs SGBD i justificaràs una selecció per a un servei amb clients remots. Després comprovaràs els recursos de la teva VM.
 
 ## Abans de començar
-VM Debian ja creada amb SSH instal·lat i consula els apunts 1.1, 1.2.1, 1.3, 3.1–3.2 i 4.1.
+Has de tindre l'activitat IAW-1.2 acabada.
+Consula els apunts 1.1, 1.2.1, 1.3, 3.1–3.2 i 4.1.
 
 Treballaràs individualment amb una única VM Debian dins de l’ordinador.
 
