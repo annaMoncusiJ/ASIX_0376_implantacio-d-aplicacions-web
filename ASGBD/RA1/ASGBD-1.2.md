@@ -43,7 +43,7 @@ dpkg-query -W mariadb-server mariadb-client
 ```
 
 2. Si la instal·lació falla, conserva l’error i consulta’l abans de repetir o canviar repositoris. No continuïs afirmant que el servei està instal·lat si no ho has verificat.
-```
+
 ### Escriu la teva resposta aquí
 **SO i recursos revisats:** …
 ```text
