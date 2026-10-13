@@ -76,7 +76,7 @@ socket = /var/run/mysqld/mysqld-asix.sock
 **Causa descartada 2:** … · **comprovació que la descarta:** …  
 **Ordre de comprovació sense canvis:** …
 
-## 2. No es pot iniciar el servidor · E3
+## 3. No es pot iniciar el servidor · E3
 
 ### Què has de saber abans de començar
 Per acceptar connexions TCP, un procés necessita vincular-se a una adreça i un port. Si un altre procés ja ocupa la combinació necessària, el servidor pot fallar amb **Address already in use**.
