@@ -4,11 +4,12 @@
 
 ## Què aconseguiràs?
 
-Instal·laràs Docker dins de Debian i hi desplegaràs el mateix web en un contenidor. **Primer sense cap base de dades**, comprovant només el camí des de l’ordinador; a la darrera classe, un cop creat el contenidor de MariaDB a ASGBD 2.4, li afegiràs la base de dades connectant-lo a aquell contenidor per la xarxa comuna.
+Instal·laràs Docker dins de Debian i hi desplegaràs el mateix web en un contenidor. **Primer sense cap base de dades**, comprovant només el camí des de l’ordinador; a la darrera classe, un cop creat MariaDB a ASGBD 2.4, integraràs els dos serveis en un únic projecte Docker Compose.
 
 ## Abans de començar
 
 Reenviament VirtualBox del web Docker: `8081 → 8080`. El contenidor de bases de dades es fa a **ASGBD 2.4**, abans de la darrera classe d’aquesta activitat: fins aleshores el web funciona sense base de dades.
+
 | Servei | Des del teu ordinador | Destinació dins de Debian |
 |---|---|---|
 | SSH | `127.0.0.1:8022` | `22` |
@@ -32,7 +33,7 @@ El Dockerfile descriu com construir la imatge; Compose descriu serveis, ports, x
 
 La xarxa comuna permet connectar contenidors entre si: dins d’una xarxa Docker definida per l’usuari, un contenidor en troba un altre pel **nom de servei**. Això és el que farà servir el web, a la darrera classe, per arribar al contenidor de bases de dades.
 
-**Docker s’instal·la dins de Debian**, amb els repositoris APT, i són tres peces: el **dimoni** (`docker`), que és el procés que crea i executa contenidors; el **connector de Compose** (`docker compose`), que llegeix el fitxer YAML; i la **imatge**, que és el motlle. Un paquet instal·lat no vol pas dimoni actiu: comprova-ho. Si el dimoni no s’està executant, els errors seran del tipus *Cannot connect to the Docker daemon* i no tindran res a veure amb el teu fitxer Compose.
+**Docker s’instal·la dins de Debian**, amb els repositoris APT, i són tres peces: el **dimoni** (`docker`), que és el procés que crea i executa contenidors; el **connector de Compose** (`docker compose`), que llegeix el fitxer YAML; i la **imatge**, que és el motlle. Un paquet instal·lat no vol pas dimoni actiu: comprova-ho. Si el dimoni no s’està executant, els errors seran del tipus **Cannot connect to the Docker daemon** i no tindran res a veure amb el teu fitxer Compose.
 
 La xarxa `asix-lab` s’ha de crear **amb la subnet del laboratori** (172.30.76.0/24, passarel·la 172.30.76.1). Dins d’aquesta xarxa, el contenidor web rep la IP **172.30.76.10** i el de bases de dades la **172.30.76.20**: això és el que permetrà, a la darrera classe, que el web trobi el servei pel nom `db` i que el compte de la base de dades pugui reconèixer aquell origen.
 
@@ -201,34 +202,34 @@ RUN a2enconf asix-lab
 
 ```apache
 <Directory /var/www/html>
-    Options -Indexes
-    AllowOverride None
-    Require all granted
-    DirectoryIndex index.html
+    Options -Indexes
+    AllowOverride None
+    Require all granted
+    DirectoryIndex index.html
 </Directory>
 ```
 
-**compose.web.yml:**
+**docker-compose.yml:**
 
 ```yaml
 services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-    image: asix-web:lab
-    ports:
-      - "${WEB_PORT:-8080}:80"
-    networks:
-      lab:
-        ipv4_address: 172.30.76.10
-    volumes:
-      - ./public:/var/www/html:ro
-    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: asix-web:lab
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    networks:
+      lab:
+        ipv4_address: 172.30.76.10
+    volumes:
+      - ./public:/var/www/html:ro
+    restart: unless-stopped
 networks:
-  lab:
-    external: true
-    name: asix-lab
+  lab:
+    external: true
+    name: asix-lab
 ```
 
 **.env.web:**
@@ -244,19 +245,19 @@ La xarxa `asix-lab` ja està creada al pas 3. La imatge `asix-web:lab` es constr
 Per construir la imatge i iniciar el servei:
 
 ```bash
-sudo docker compose --env-file .env.web -f compose.web.yml up -d --build
+sudo docker compose --env-file .env.web up -d --build
 ```
 
 Comprova que el contenidor està en funcionament:
 
 ```bash
-sudo docker compose --env-file .env.web -f compose.web.yml ps
+sudo docker compose --env-file .env.web ps
 ```
 
 Consulta els registres del servei si necessites detectar algun problema:
 
 ```bash
-sudo docker compose --env-file .env.web -f compose.web.yml logs
+sudo docker compose --env-file .env.web logs
 ```
 
 Des de l'ordinador amfitrió, obre el navegador i accedeix a:
@@ -298,15 +299,15 @@ Una prova feta dins de Debian al port 8080 comprova el tram Docker; la prova fet
 Completa les proves en l'ordre indicat. No confonguis la prova local de Debian amb la prova feta des de l'ordinador amfitrió. Des de Debian i situat a `~/asix-web-docker`, inicia el servei i comprova'n l'estat:
 
 ```bash
-sudo docker compose --env-file .env.web -f compose.web.yml up -d
+sudo docker compose --env-file .env.web up -d
 ```
 
 ```bash
-sudo docker compose --env-file .env.web -f compose.web.yml ps
+sudo docker compose --env-file .env.web ps
 ```
 
 ```bash
-sudo docker compose --env-file .env.web -f compose.web.yml logs --tail=15
+sudo docker compose --env-file .env.web logs --tail=15
 ```
 
 Primer, des del terminal de Debian, prova `curl -i http://127.0.0.1:8080/prova.php`. Aquesta prova comprova el port publicat a Debian sense passar per VirtualBox. Després, des del terminal de l'**ordinador amfitrió** (no des de la sessió SSH), executa:
@@ -343,18 +344,26 @@ Per identificar el tram que falla, compara el port declarat al Compose amb el po
 
 1. **Provoca el desajustament.** A Debian, obre `.env.web` i canvia `WEB_PORT=8080` per `WEB_PORT=8082`. Desa el fitxer i aplica el canvi:
 
-   ```bash
-   nano .env.web
-   sudo docker compose --env-file .env.web -f compose.web.yml up -d
-   ```
-   No canviïs la regla de VirtualBox: continua reenviant `ordinador:8081 → Debian:8080`.
+   ```bash
+   nano .env.web
+
+   sudo docker compose --env-file .env.web up -d
+   ```
+
+   No canviïs la regla de VirtualBox: continua reenviant `ordinador:8081 → Debian:8080`.
+
 2. **Comprova el símptoma des de l'ordinador.** Executa `curl -i http://127.0.0.1:8081/prova.php`. La petició no ha d'arribar al contenidor perquè VirtualBox continua enviant-la al port 8080 de Debian, mentre Docker escolta al 8082.
-3. **Localitza el tram que funciona.** A Debian, consulta `sudo docker compose --env-file .env.web -f compose.web.yml ps` i executa `curl -i http://127.0.0.1:8082/prova.php`. Anota el port publicat i el codi HTTP obtingut.
+
+3. **Localitza el tram que funciona.** A Debian, consulta `sudo docker compose --env-file .env.web ps` i executa `curl -i http://127.0.0.1:8082/prova.php`. Anota el port publicat i el codi HTTP obtingut.
+
 4. **Restaura la configuració.** Torna a posar `WEB_PORT=8080` a `.env.web` i aplica el canvi:
-   ```bash
-   sudo docker compose --env-file .env.web -f compose.web.yml up -d
-   ```
-   Des de l'ordinador, comprova que `http://127.0.0.1:8081/prova.php` torna a funcionar i que `http://127.0.0.1:8081/sense-index/` retorna HTTP 403. Aquest 403 és esperat: el directori existeix però no conté cap fitxer d'índex i Apache té desactivat el llistat de directoris.
+
+   ```bash
+   sudo docker compose --env-file .env.web up -d
+   ```
+
+   Des de l'ordinador, comprova que `http://127.0.0.1:8081/prova.php` torna a funcionar i que `http://127.0.0.1:8081/sense-index/` retorna HTTP 403. Aquest 403 és esperat: el directori existeix però no conté cap fitxer d'índex i Apache té desactivat el llistat de directoris.
+
 ### Escriu la teva resposta aquí
 **Quin resultat obtens des de l'ordinador amb el port desajustat (codi HTTP o error)?:** …  
 **Quin port publicat mostra `compose ps` i quin resultat dona `curl` a Debian?:** …  
@@ -365,96 +374,344 @@ Per identificar el tram que falla, compara el port declarat al Compose amb el po
 La capa escrivible d’un contenidor no és el lloc adequat per confiar-hi dades que s’han de conservar quan el substitueixes. En aquesta pràctica, les pàgines es troben en una carpeta de Debian que es munta al contenidor. Recrear el contenidor no elimina aquesta carpeta.
 L’opció `:ro` fa el muntatge de només lectura **des del contenidor**; no impedeix que editis la carpeta des de Debian amb permisos suficients. Això explica que puguis canviar la pàgina a l’host i veure-la al web. Persistència no equival a còpia de seguretat: si esborres el fitxer host, el muntatge no el recupera.
 ### Què has de fer
+
 1. A Debian, obre `~/asix-web-docker/public/index.html` i modifica o afegeix una frase identificativa. No eliminis ni alteris la marca `ASIX_WEB_OK`. Desa el fitxer.
+
 2. Des del navegador de l'ordinador amfitrió, visita `http://127.0.0.1:8081/index.html` i comprova que hi apareix la frase nova.
+
 3. Torna a Debian, situa't a `~/asix-web-docker` i força la recreació del contenidor:
+
 ```bash
-
-sudo docker compose --env-file .env.web -f compose.web.yml up -d --force-recreate
-
+sudo docker compose --env-file .env.web up -d --force-recreate
 ```
+
 4. Torna a carregar la pàgina des de l'ordinador i comprova que la frase continua apareixent. Explica per què sobreviu a la recreació del contenidor i quin seria el risc si s'eliminés el fitxer de Debian. `public/` és una carpeta de Debian muntada al contenidor en mode només lectura; no és una carpeta de l'ordinador físic ni una còpia de seguretat.
+
 ### Escriu la teva resposta aquí
 **Quina frase identificativa has afegit a `index.html`?:** …  
 **La frase apareixia abans i després de recrear el contenidor? Quin resultat has observat?:** …  
 **Quina és la ruta del fitxer a Debian i per què el contingut es conserva en recrear el contenidor?:** …  
 **Quina comprovació demostra que Apache serveix el fitxer muntat des de Debian i no una còpia incorporada a la imatge?:** …
-## 5. Afegeix la base de dades i connecta el web al contenidor · E5
+
+## 5. Integra el web i MariaDB en un únic projecte Docker Compose · E5
+
 ### Què has de saber abans de començar
-A la darrera classe, el contenidor de bases de dades que vas preparar a **ASGBD 2.4** ha d'estar en funcionament i connectat a la xarxa externa `asix-lab`, amb l'àlies DNS `db`. Quan **web** i **db** comparteixen aquesta xarxa Docker, el web pot resoldre el nom `db` i connectar-se al port intern **3306**. La connexió entre contenidors no passa per l'ordinador ni pel reenviament 3308. Abans de començar, comprova a ASGBD 2.4 que el contenidor MariaDB continua actiu i connectat a `asix-lab` amb l'àlies `db`.
-Afegir la base de dades vol dir **tres coses**: el fitxer de configuració amb el secret (fora del codi i muntat com a fitxer individual), la línia del muntatge al Compose, i el fitxer `db.php` que fa la consulta. El compte és el d’aplicació del **MariaDB Docker** (`webapp`), restringit a l’origen **172.30.76.10** —la IP fixa del contenidor web— i només amb lectura sobre la taula de comprovació. Per això la IP del web s’ha de mantenir fixada al Compose: si canviés, el compte deixaria de reconèixer aquell origen.
-Les dades de prova poden tenir el mateix text que les del servidor tradicional, però els comptes, les contrasenyes i el directori de dades són independents: un resultat correcte no demostra per si sol amb quina instància parles.
-La comparació final ha de distingir canvis d’implementació d’invariants: continuen existint HTTP, SQL, permisos, processos i necessitat de verificar. Docker facilita reproduir entorns, però no elimina l’administració ni garanteix seguretat automàtica.
+
+A ASGBD-2.4 has creat i inicialitzat un contenidor MariaDB independent. Ara integrarem aquest servei al projecte del web perquè **un únic fitxer `docker-compose.yml` gestioni els dos contenidors**.
+
+No instal·larem una segona base de dades ni en crearem una de nova. Conservarem les dades que ja has introduït a ASGBD-2.4 mitjançant el volum Docker amb nom explícit `asix_mariadb_data`.
+
+Al final tindrem aquesta arquitectura:
+
+```text
+Ordinador amfitrió
+    |
+    | http://127.0.0.1:8081
+    v
+VirtualBox:8081 -> Debian:8080
+                      |
+                      v
+              Docker Compose
+              projecte asix-web
+                 /       \
+                /         \
+        web:80             db:3306
+        172.30.76.10       172.30.76.20
+                \         /
+                 asix-lab
+```
+
+Els dos serveis compartiran la xarxa externa `asix-lab`. El web trobarà MariaDB pel nom de servei `db` i el port intern `3306`. El port `3307` només serveix per accedir a MariaDB des de Debian; el `3308` és el reenviament de VirtualBox per accedir-hi des de l'ordinador.
+
+**Abans de començar, comprova que:**
+
+- El contenidor MariaDB de ASGBD-2.4 està en funcionament.
+- El contenidor MariaDB té la IP `172.30.76.20` i està connectat a `asix-lab`.
+- El volum de dades es diu `asix_mariadb_data`.
+- Existeix el compte `webapp` amb permís `SELECT` sobre `asix_lab.comprovacio`, restringit a l'origen `172.30.76.10`.
+- Coneixes la contrasenya de `webapp`, desada a `~/asix-bd-docker/secrets/webapp_password.txt`.
+
+No continuïs si aquestes condicions no es compleixen. Revisa ASGBD-2.4 abans de modificar el desplegament.
+
 ### Què has de fer
-A l'última classe, després d'ASGBD 2.4, treballa dins de `~/asix-web-docker`. Abans de modificar el web, comprova que MariaDB està actiu i comparteix la xarxa `asix-lab` amb el nom DNS `db`. Si no es compleix aquesta condició, atura't i revisa l'exercici ASGBD 2.4.
-1. Copia al projecte el fitxer que fa la consulta. Abans de continuar, comprova que aquesta versió de `db.php` llegeix la configuració de `/etc/asix/db.ini` i utilitza les claus `host`, `port`, `database`, `user` i `password`. Si la plantilla lliurada a IAW 1.4 utilitza un altre camí o noms de claus, cal mantenir-los coherents entre el PHP i el fitxer de configuració:
-```bash
 
+Treballa des de Debian. En aquesta activitat farem servir `~/asix-web-docker` com a carpeta del projecte unificat.
+
+**1. Prepara una còpia dels fitxers de MariaDB dins del projecte web.**
+
+Crea una carpeta `db` i copia-hi la configuració, els scripts d'inicialització i els fitxers de secrets creats a ASGBD-2.4:
+
+```bash
+mkdir -p ~/asix-web-docker/db
+cp -a ~/asix-bd-docker/config ~/asix-web-docker/db/
+cp -a ~/asix-bd-docker/init ~/asix-web-docker/db/
+cp -a ~/asix-bd-docker/secrets ~/asix-web-docker/db/
+```
+
+Comprova l'estructura:
+
+```bash
+cd ~/asix-web-docker
+find db -maxdepth 2 -type f -print
+```
+
+Hauries de trobar els fitxers de configuració, l'SQL d'inicialització i els tres fitxers de contrasenyes. No mostris el contingut dels secrets.
+
+**2. Prepara el fitxer de configuració de la connexió PHP.**
+
+Copia el PHP que fa la consulta:
+
+```bash
 cp /var/www/asix/public/db.php public/
-
 ```
-2. Crea la carpeta `secrets` i el fitxer `secrets/db.ini`. El fitxer contindrà la configuració per connectar amb el **contenidor MariaDB Docker**, no amb el servidor tradicional. Crea'l amb el teu usuari i edita'l:
-   ```bash
-   install -d -m 0700 secrets
-   nano secrets/db.ini
-   ```
-   Escriu-hi aquest contingut, substituint la contrasenya pel secret real del compte `webapp` creat a ASGBD 2.4:
-   ```ini
-   host = "db"
-   port = "3306"
-   database = "asix_lab"
-   user = "webapp"
-   password = "ESCRIU_AQUI_EL_SECRET_REAL"
-   ```
-   No copiïs el secret al document de lliurament. `db:3306` funciona perquè els dos contenidors són dins de la mateixa xarxa Docker. No utilitzis el port 3308 de l'ordinador per connectar els contenidors.
-3. Comprova quin GID té l'usuari `www-data` dins de la imatge PHP:
-   ```bash
-   sudo docker run --rm --entrypoint id asix-web:lab www-data
-   ```
-   Utilitza el GID que apareix a la sortida. Si és `33`, executa:
-   ```bash
-   sudo chown root:33 secrets/db.ini
-   sudo chmod 0640 secrets/db.ini
-   ```
-   Si el GID és diferent, substitueix `33` pel valor real. Així el procés PHP pot llegir el fitxer a través del grup, però no modificar-lo. El secret es munta com a fitxer individual i en mode només lectura.
-4. **Afegeix el muntatge** al `compose.web.yml`, dins de `volumes`:
+
+Comprova que aquesta versió de `db.php` llegeix `/etc/asix/db.ini` i utilitza les claus `host`, `port`, `database`, `user` i `password`.
+
+Crea el fitxer de configuració:
+
+```bash
+mkdir -p secrets
+chmod 700 secrets
+nano secrets/db.ini
+```
+
+Escriu-hi el contingut següent i substitueix el valor de la contrasenya pel secret real de `webapp`:
+
+```ini
+host = "db"
+port = "3306"
+database = "asix_lab"
+user = "webapp"
+password = "ESCRIU_AQUI_EL_SECRET_REAL"
+```
+
+No copiïs el secret al document de lliurament.
+
+Protegeix el fitxer perquè només el propietari i el grup el puguin llegir:
+
+```bash
+sudo docker run --rm --entrypoint id asix-web:lab www-data
+```
+
+Anota el GID que apareix a la sortida. Si és `33`, executa:
+
+```bash
+sudo chown root:33 secrets/db.ini
+sudo chmod 0640 secrets/db.ini
+```
+
+Si el GID és diferent, substitueix `33` pel valor real. Així el procés PHP pot llegir el fitxer a través del grup, però no modificar-lo.
+
+**3. Atura el desplegament independent de MariaDB sense esborrar les dades.**
+
+Entra a la carpeta del projecte de bases de dades i atura'n els contenidors:
+
+```bash
+cd ~/asix-bd-docker
+sudo docker compose down
+```
+
+Aquesta ordre elimina el contenidor MariaDB, però **no elimina el volum `asix_mariadb_data`**. No utilitzis `down -v` ni eliminis el volum manualment.
+
+Comprova que el volum continua existint:
+
+```bash
+sudo docker volume inspect asix_mariadb_data
+```
+
+Torna al projecte web:
+
+```bash
+cd ~/asix-web-docker
+```
+
+**4. Crea el fitxer únic `docker-compose.yml`.**
+
+Aquest fitxer substituirà, per al desplegament final, l'ús separat de `docker-compose.yml` i el Compose de MariaDB. Inclourà els dos serveis:
+
 ```yaml
-
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: asix-web:lab
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    networks:
+      lab:
+        ipv4_address: 172.30.76.10
+    volumes:
+      - ./public:/var/www/html:ro
       - ./secrets/db.ini:/etc/asix/db.ini:ro
-
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+  db:
+    image: mariadb:11.4
+    container_name: mariadb_docker
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/root_password
+      MARIADB_DATABASE: asix_lab
+      MARIADB_USER: clientlab
+      MARIADB_PASSWORD_FILE: /run/secrets/user_password
+    secrets:
+      - root_password
+      - user_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./db/config/60-asix.cnf:/etc/mysql/conf.d/60-asix.cnf:ro
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      lab:
+        ipv4_address: 172.30.76.20
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+volumes:
+  mariadb_data:
+    external: true
+    name: asix_mariadb_data
+secrets:
+  root_password:
+    file: ./db/secrets/root_password.txt
+  user_password:
+    file: ./db/secrets/user_password.txt
+networks:
+  lab:
+    external: true
+    name: asix-lab
 ```
-5. Abans de recrear el web, comprova que el contenidor `web` resol el nom `db` a través de la xarxa compartida:
-   ```bash
-   sudo docker compose --env-file .env.web -f compose.web.yml exec web getent hosts db
-   ```
-   Si no apareix una adreça IP, revisa que MariaDB estigui connectat a `asix-lab` i que tingui l'àlies `db`. Quan la resolució funcioni, recrea el web i comprova la consulta des de l'ordinador:
+
+Desa'l com `docker-compose.yml` a `~/asix-web-docker`.
+
+Observa les parts més importants:
+
+- `web` i `db` són dos serveis del mateix projecte Compose.
+- Tots dos comparteixen la xarxa externa `asix-lab` i mantenen les IP fixes.
+- El nom de servei `db` permet que PHP localitzi MariaDB.
+- `depends_on` amb `service_healthy` fa que Compose esperi que MariaDB superi la comprovació de salut abans d'iniciar el web.
+- `mariadb_data` és un volum extern: Compose l'utilitza, però no n'assumeix la creació ni l'eliminació.
+- Els fitxers de configuració i secrets continuen separats de la imatge i es munten dins dels contenidors.
+
+El servei `db` conserva el volum que ja contenia les dades. Per això, els scripts de `db/init` **no es tornaran a executar**: només s'executen quan MariaDB inicialitza un directori de dades buit.
+
+**5. Comprova la configuració i inicia els dos serveis.**
+
+Des de `~/asix-web-docker`, valida el fitxer:
+
 ```bash
-
-sudo docker compose --env-file .env.web -f compose.web.yml up -d --force-recreate
-
+sudo docker compose --env-file .env.web config
 ```
 
-```bash
+Si no hi ha errors, inicia el projecte:
 
+```bash
+sudo docker compose --env-file .env.web up -d --build
+```
+
+Comprova els dos serveis:
+
+```bash
+sudo docker compose --env-file .env.web ps
+```
+
+Consulta els registres si algun servei no està actiu:
+
+```bash
+sudo docker compose --env-file .env.web logs --tail=30
+```
+
+Comprova que els dos contenidors estan connectats a la xarxa:
+
+```bash
+sudo docker network inspect asix-lab
+```
+
+Hauries de trobar el web a `172.30.76.10` i MariaDB a `172.30.76.20`.
+
+**6. Comprova la resolució del nom i la connexió a la base de dades.**
+
+Des del servei web, comprova que el nom `db` es resol:
+
+```bash
+sudo docker compose --env-file .env.web exec web getent hosts db
+```
+
+La resposta ha d'incloure l'adreça `172.30.76.20`.
+
+Ara, des de l'ordinador amfitrió, executa:
+
+```bash
 curl -i http://127.0.0.1:8081/db.php
-
 ```
 
-El resultat esperat és **HTTP 200** i el text **ASIX_DB_OK: fila-demo**. Si obtens HTTP 503 o un altre error, comprova per separat el muntatge del fitxer, els permisos de lectura, la resolució DNS `db`, l'estat de MariaDB, el nom de la base de dades i les credencials. No copiïs cap contrasenya ni cap contingut del fitxer secret a la resposta.
+El resultat esperat és **HTTP 200** i el text **`ASIX_DB_OK: fila-demo`**.
 
-6. Completa la comparació i lliura el document. Als últims 30 min, qüestionari individual del RA1; no hi ha examen pràctic addicional.
+Si no funciona, comprova per separat:
+
+- Que els dos serveis estiguin actius i saludables.
+- Que comparteixin la xarxa `asix-lab`.
+- Que `db` es resolgui a `172.30.76.20`.
+- Que `secrets/db.ini` estigui muntat i PHP el pugui llegir.
+- Que el compte `webapp` tingui la contrasenya correcta i el permís `SELECT`.
+- Que la taula `asix_lab.comprovacio` contingui la fila de prova.
+
+**7. Comprova que el projecte unificat es gestiona amb una sola ordre.**
+
+Des de `~/asix-web-docker`, executa:
+
+```bash
+sudo docker compose --env-file .env.web ps
+```
+
+Aquesta ordre ha de mostrar els serveis `web` i `db`. A partir d'ara, per iniciar, aturar o consultar el projecte, treballa des d'aquesta carpeta i utilitza aquest `docker-compose.yml`.
+
+Per aturar els dos serveis sense eliminar les dades:
+
+```bash
+sudo docker compose --env-file .env.web down
+```
+
+Per tornar-los a iniciar:
+
+```bash
+sudo docker compose --env-file .env.web up -d
+```
+
+No utilitzis `down -v`: el volum `asix_mariadb_data` conté les dades de MariaDB.
 
 ### Escriu la teva resposta aquí
 
-**Quin resultat HTTP i quin missatge retorna `db.php` en consultar `db:3306`? No incloguis el secret:** …  
+**Quins dos serveis gestiona el nou `docker-compose.yml`?:** …
 
-**Quin compte d'aplicació s'utilitza i des de quina IP d'origen? Per què aquesta IP s'ha de mantenir fixa?:** …
+**Quina IP té cada servei i quina xarxa comparteixen?:** …
+
+**Quin resultat obtens amb `getent hosts db`?:** …
+
+**Quin resultat HTTP i quin missatge retorna `db.php`?:** …
+
+**Quin volum utilitza MariaDB? Com has comprovat que és el mateix que havies creat a ASGBD-2.4?:** …
+
+**Per què hem aturat el Compose anterior amb `down` i no amb `down -v`?:** …
+
+**Quin avantatge té gestionar web i base de dades des d'un únic projecte Compose?:** …
+
+**Completa la comparació:**
+
 | Aspecte | Manual dins de Debian | Docker dins de Debian | Què es manté? |
 |---|---|---|---|
 | Instal·lació de components | … | … | … |
 | Servei/procés | … | … | … |
 | Configuració | … | … | … |
-| Camí des de l’ordinador | … | … | … |
+| Camí des de l'ordinador | … | … | … |
 | Camí web → BD | … | … | … |
 | Persistència/recreació | … | … | … |
 
