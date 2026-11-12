@@ -202,10 +202,10 @@ RUN a2enconf asix-lab
 
 ```apache
 <Directory /var/www/html>
-    Options -Indexes
-    AllowOverride None
-    Require all granted
-    DirectoryIndex index.html
+    Options -Indexes
+    AllowOverride None
+    Require all granted
+    DirectoryIndex index.html
 </Directory>
 ```
 
@@ -213,23 +213,23 @@ RUN a2enconf asix-lab
 
 ```yaml
 services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-    image: asix-web:lab
-    ports:
-      - "${WEB_PORT:-8080}:80"
-    networks:
-      lab:
-        ipv4_address: 172.30.76.10
-    volumes:
-      - ./public:/var/www/html:ro
-    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: asix-web:lab
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    networks:
+      lab:
+        ipv4_address: 172.30.76.10
+    volumes:
+      - ./public:/var/www/html:ro
+    restart: unless-stopped
 networks:
-  lab:
-    external: true
-    name: asix-lab
+  lab:
+    external: true
+    name: asix-lab
 ```
 
 **.env.web:**
@@ -344,13 +344,13 @@ Per identificar el tram que falla, compara el port declarat al Compose amb el po
 
 1. **Provoca el desajustament.** A Debian, obre `.env.web` i canvia `WEB_PORT=8080` per `WEB_PORT=8082`. Desa el fitxer i aplica el canvi:
 
-   ```bash
-   nano .env.web
+   ```bash
+   nano .env.web
 
-   sudo docker compose --env-file .env.web up -d
-   ```
+   sudo docker compose --env-file .env.web up -d
+   ```
 
-   No canviïs la regla de VirtualBox: continua reenviant `ordinador:8081 → Debian:8080`.
+   No canviïs la regla de VirtualBox: continua reenviant `ordinador:8081 → Debian:8080`.
 
 2. **Comprova el símptoma des de l'ordinador.** Executa `curl -i http://127.0.0.1:8081/prova.php`. La petició no ha d'arribar al contenidor perquè VirtualBox continua enviant-la al port 8080 de Debian, mentre Docker escolta al 8082.
 
@@ -358,11 +358,11 @@ Per identificar el tram que falla, compara el port declarat al Compose amb el po
 
 4. **Restaura la configuració.** Torna a posar `WEB_PORT=8080` a `.env.web` i aplica el canvi:
 
-   ```bash
-   sudo docker compose --env-file .env.web up -d
-   ```
+   ```bash
+   sudo docker compose --env-file .env.web up -d
+   ```
 
-   Des de l'ordinador, comprova que `http://127.0.0.1:8081/prova.php` torna a funcionar i que `http://127.0.0.1:8081/sense-index/` retorna HTTP 403. Aquest 403 és esperat: el directori existeix però no conté cap fitxer d'índex i Apache té desactivat el llistat de directoris.
+   Des de l'ordinador, comprova que `http://127.0.0.1:8081/prova.php` torna a funcionar i que `http://127.0.0.1:8081/sense-index/` retorna HTTP 403. Aquest 403 és esperat: el directori existeix però no conté cap fitxer d'índex i Apache té desactivat el llistat de directoris.
 
 ### Escriu la teva resposta aquí
 **Quin resultat obtens des de l'ordinador amb el port desajustat (codi HTTP o error)?:** …  
