@@ -87,13 +87,13 @@ El projecte tindrà aquesta estructura:
 asix-bd-docker/
 ├── docker-compose.yml
 ├── config/
-│   └── 60-asix.cnf
+│   └── 60-asix.cnf
 ├── init/
-│   └── 01-dades.sql
+│   └── 01-dades.sql
 └── secrets/
-    ├── root_password.txt
-    ├── user_password.txt
-    └── webapp_password.txt
+    ├── root_password.txt
+    ├── user_password.txt
+    └── webapp_password.txt
 ```
 
 **3. Busca la imatge oficial de MariaDB a Docker Hub.**
@@ -154,38 +154,38 @@ En lloc d'escriure contrasenyes directament al manifest, utilitzarem fitxers de 
 
 ```yaml
 services:
-  db:
-    image: mariadb:11.4
-    container_name: mariadb_docker
-    restart: always
-    environment:
-      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/root_password
-      MARIADB_DATABASE: asix_lab
-      MARIADB_USER: clientlab
-      MARIADB_PASSWORD_FILE: /run/secrets/user_password
-    secrets:
-      - root_password
-      - user_password
-    ports:
-      - "3307:3306"
-    volumes:
-      - mariadb_data:/var/lib/mysql
-      - ./config/60-asix.cnf:/etc/mysql/conf.d/60-asix.cnf:ro
-      - ./init:/docker-entrypoint-initdb.d:ro
-    networks:
-      asix-lab:
-        ipv4_address: 172.30.76.20
+  db:
+    image: mariadb:11.4
+    container_name: mariadb_docker
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/root_password
+      MARIADB_DATABASE: asix_lab
+      MARIADB_USER: clientlab
+      MARIADB_PASSWORD_FILE: /run/secrets/user_password
+    secrets:
+      - root_password
+      - user_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./config/60-asix.cnf:/etc/mysql/conf.d/60-asix.cnf:ro
+      - ./init:/docker-entrypoint-initdb.d:ro
+    networks:
+      asix-lab:
+        ipv4_address: 172.30.76.20
 volumes:
-  mariadb_data:
+  mariadb_data:
 secrets:
-  root_password:
-    file: ./secrets/root_password.txt
-  user_password:
-    file: ./secrets/user_password.txt
+  root_password:
+    file: ./secrets/root_password.txt
+  user_password:
+    file: ./secrets/user_password.txt
 networks:
-  asix-lab:
-    external: true
-    name: asix-lab
+  asix-lab:
+    external: true
+    name: asix-lab
 ```
 
 Fixa't en alguns detalls:
@@ -208,8 +208,8 @@ Observa especialment aquesta part:
 
 ```yaml
 networks:
-  asix-lab:
-    ipv4_address: 172.30.76.20
+  asix-lab:
+    ipv4_address: 172.30.76.20
 ```
 
 Això és imprescindible perquè el contenidor web pugui identificar l'origen de la connexió i perquè l'usuari `webapp` pugui tenir restringit l'accés a la IP del contenidor web.
@@ -346,8 +346,8 @@ Introdueix-hi:
 ```sql
 USE asix_lab;
 CREATE TABLE comprovacio (
-    id INT PRIMARY KEY,
-    etiqueta VARCHAR(50)
+    id INT PRIMARY KEY,
+    etiqueta VARCHAR(50)
 );
 INSERT INTO comprovacio VALUES
 (1, 'fila-demo');
@@ -470,7 +470,7 @@ En el nostre cas hem definit:
 
 ```yaml
 volumes:
-  - mariadb_data:/var/lib/mysql
+  - mariadb_data:/var/lib/mysql
 ```
 
 Això indica que el directori on MariaDB desa les seves dades està associat a un volum Docker.
